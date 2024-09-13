@@ -5,7 +5,7 @@ import styles from "./page.module.css";
 export default function Home() {
   return (
     <div className={styles.page}>
-     welcome to Aicodex
+     welcome to Aicodex by arihant jain
     </div>
   );
 }
