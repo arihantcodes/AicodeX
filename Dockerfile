@@ -1,26 +1,20 @@
-# Use the official Node.js image as the base image
-FROM node:18
+FROM node:20-alpine
 
-# Set the working directory
-WORKDIR /apps/web
+# Set the working directory in the container
+WORKDIR /usr/src/app
 
-# Copy package.json and package-lock.json (or yarn.lock) first to leverage Docker cache
-COPY package*.json ./
-
-# Install dependencies
-RUN npm install
 
 # Copy the rest of the application code
 COPY . .
 
-# Build the application (if needed)
-RUN npm run build
 
-# Expose the port the app runs on
+
+
+
+
+
+# Expose the application port
 EXPOSE 3000
 
-# Define environment variables (if needed)
-ENV NODE_ENV=production
-
-# Start the application
-CMD ["npm", "start"]
+# Command to run the application
+CMD ["npm", "run", "dev"]
