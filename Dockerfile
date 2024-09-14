@@ -1,17 +1,20 @@
-FROM node:20.12.0-alpine3.19
+FROM node:20-alpine
 
-WORKDIR /aicodex
-
-COPY package.json package-lock.json turbo.json tsconfig.json ./
-
+# Set the working directory in the container
+WORKDIR /usr/src/app
 
 
-# Install dependencies
-RUN npm install
-# Can you add a script to the global package.json that does this?
-RUN npm run db:generate
+# Copy the rest of the application code
+COPY . .
 
-# Can you filter the build down to just one app?
-RUN npm run build
 
-CMD ["npm", "run", "start-user-app"]
+
+
+
+
+
+# Expose the application port
+EXPOSE 3000
+
+# Command to run the application
+CMD ["npm", "run", "dev"]
