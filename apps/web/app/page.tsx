@@ -1,11 +1,25 @@
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Code, Globe, Zap, Laptop, Users, Sparkles } from "lucide-react"
-import Link from "next/link"
+import Footer from "@/components/footer";
+import { BentoDemo } from "@/components/grid";
+import Hero from "@/components/hero";
+import { MacbookScrollDemo } from "@/components/landing";
+import Ripple from "@/components/magicui/ripple";
+import { ModeToggle } from "@/components/moon";
+import Navbar from "@/components/Navbar";
+import { Shine } from "@/components/shine";
+import React from "react";
 
-export default function AicodeXLanding() {
+const page = () => {
   return (
+    <>
+      <Navbar />
 
-    </div>
-  )
-}
+      <Hero />
+      <MacbookScrollDemo />
+      
+      <Shine />
+      <Footer />
+    </>
+  );
+};
+
+export default page;
