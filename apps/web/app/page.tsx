@@ -1,11 +1,11 @@
-import Image from "next/image";
-import { Button } from "@repo/ui/button";
-import styles from "./page.module.css";
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Code, Globe, Zap, Laptop, Users, Sparkles } from "lucide-react"
+import Link from "next/link"
 
-export default function Home() {
+export default function AicodeXLanding() {
   return (
-    <div className={styles.page}>
-     welcome to Aicodex by arihant jain ok
+
     </div>
-  );
+  )
 }
