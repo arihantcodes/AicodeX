@@ -1,14 +1,9 @@
-"use client"
-
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/footer";
-import { useState } from "react";
 
 export default function PricingSection() {
-  const [activePlan, setActivePlan] = useState("Free"); // Default active plan
-
   const pricingTiers = [
     {
       name: "Free",
@@ -96,73 +91,50 @@ export default function PricingSection() {
           <p className="text-xl text-center mb-12 text-gray-400">
             Choose the perfect plan for your development needs, from free to enterprise-level solutions.
           </p>
-          
-          {/* Plan Switcher */}
-          <div className="flex justify-center mb-8 space-x-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {pricingTiers.map((tier, index) => (
-              <button
+              <div
                 key={index}
-                onClick={() => setActivePlan(tier.name)}
-                className={`px-4 py-2 rounded-lg text-sm font-semibold ${
-                  activePlan === tier.name ? "bg-[#020817] text-white" : "bg-gray-200 text-black"
-                }`}
+                className={`rounded-lg p-8 border-2 ${tier.featured ? "border-[#020817]" : "border-gray-700"} flex flex-col justify-between`}
               >
-                {tier.name}
-              </button>
-            ))}
-          </div>
-          
-          {/* Pricing Card */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {pricingTiers
-              .filter(tier => tier.name === activePlan)
-              .map((tier, index) => (
-                <div
-                  key={index}
-                  className={`rounded-lg p-8 border-2 ${
-                    tier.featured ? "border-[#020817]" : "border-gray-700"
-                  } flex flex-col justify-between`}
-                >
-                  <div>
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <h3 className="text-2xl font-bold">{tier.name}</h3>
-                        <p className="text-sm text-gray-400">{tier.period}</p>
-                      </div>
-                      {tier.featured && (
-                        <span className="bg-[#020817] text-white text-xs font-semibold px-2 py-1 rounded">
-                          Featured
-                        </span>
-                      )}
+                <div>
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h3 className="text-2xl font-bold">{tier.name}</h3>
+                      <p className="text-sm text-gray-400">{tier.period}</p>
                     </div>
-                    <div className="mb-2">
-                      <span className="text-5xl font-bold">${tier.price}</span>
-                      {tier.originalPrice && (
-                        <>
-                          <span className="text-lg line-through text-gray-500 ml-2">
-                            ${tier.originalPrice}
-                          </span>
-                          <span className="text-sm bg-green-800 text-green-200 px-2 py-1 rounded ml-2">
-                            {tier.discount}
-                          </span>
-                        </>
-                      )}
-                    </div>
-                    <p className="text-gray-400 mb-6">{tier.description}</p>
-                    <ul className="space-y-3 mb-6">
-                      {tier.features.map((feature, featureIndex) => (
-                        <li key={featureIndex} className="flex items-start">
-                          <Check className="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                          <span className="text-sm">{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
+                    {tier.featured && (
+                      <span className="bg-[#020817] text-white text-xs font-semibold px-2 py-1 rounded">
+                        Featured
+                      </span>
+                    )}
                   </div>
-                  <Button className="w-full" variant={tier.featured ? "default" : "outline"}>
-                    {tier.buttonText}
-                  </Button>
+                  <div className="mb-2">
+                    <span className="text-5xl font-bold">${tier.price}</span>
+                    {tier.originalPrice && (
+                      <>
+                        <span className="text-lg line-through text-gray-500 ml-2">${tier.originalPrice}</span>
+                        <span className="text-sm bg-green-800 text-green-200 px-2 py-1 rounded ml-2">
+                          {tier.discount}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                  <p className="text-gray-400 mb-6">{tier.description}</p>
+                  <ul className="space-y-3 mb-6">
+                    {tier.features.map((feature, featureIndex) => (
+                      <li key={featureIndex} className="flex items-start">
+                        <Check className="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                        <span className="text-sm">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-              ))}
+                <Button className="w-full" variant={tier.featured ? "default" : "outline"}>
+                  {tier.buttonText}
+                </Button>
+              </div>
+            ))}
           </div>
         </div>
       </section>
