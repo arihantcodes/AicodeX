@@ -8,42 +8,39 @@ import { Request, Response } from "express";
 
 const prisma = new PrismaClient();
 
-declare global {
-  namespace Express {
-    interface Request {
-      user?: {
-        userId: number;
-        email: string;
-      };
-    }
-  }
-}
 
-// Utility function to generate tokens
-const generateAccessToken = (userId: number) => {
+const generateAccessToken = (userId: number, username: string) => {
   const secret = process.env.ACCESS_TOKEN_SECRET;
   if (!secret) {
     throw new Error("ACCESS_TOKEN_SECRET is not defined");
   }
-  return jwt.sign({ userId }, secret, {
-    expiresIn: "15m",
+  return jwt.sign({ userId, username }, secret, {
+    expiresIn: "1d",
   });
 };
 
-const generateRefreshToken = (userId: number) => {
+const generateRefreshToken = (userId: number, username: string) => {
   const secret = process.env.REFRESH_TOKEN_SECRET;
   if (!secret) {
     throw new Error("REFRESH_TOKEN_SECRET is not defined");
   }
-  return jwt.sign({ userId }, secret, {
+  return jwt.sign({ userId, username }, secret, {
     expiresIn: "7d",
   });
 };
 
 // Get all users
 const allUsers = asyncHandler(async (req: Request, res: Response) => {
-  const users = await prisma.user.findMany();
-  return res.status(200).json({ data: users });
+  const users = await prisma.user.findMany({
+    select: {
+      id: true,
+      username: true,
+      email: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+  return res.status(200).json(new ApiResponse(200, users, "Users fetched successfully"));
 });
 
 // Register new user
@@ -54,12 +51,14 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
     throw new ApiError(400, "All fields are required");
   }
 
-  const existingUser = await prisma.user.findUnique({
-    where: { email },
+  const existingUser = await prisma.user.findFirst({
+    where: {
+      OR: [{ email }, { username: username.toLowerCase() }],
+    },
   });
 
   if (existingUser) {
-    throw new ApiError(400, "User already exists");
+    throw new ApiError(400, "User with this email or username already exists");
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
@@ -72,12 +71,24 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
     },
   });
 
+  const accessToken = generateAccessToken(user.id, user.username);
+  const refreshToken = generateRefreshToken(user.id, user.username);
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { refreshToken },
+  });
+
+  res.cookie("AccessToken", accessToken, { httpOnly: true, secure: true });
+  res.cookie("RefreshToken", refreshToken, { httpOnly: true, secure: true });
+
   return res.status(201).json(
     new ApiResponse(
-      200,
+      201,
       {
-        username: user.username,
-        email: user.email,
+        user: { id: user.id, username: user.username, email: user.email },
+        accessToken,
+        refreshToken,
       },
       "User registered successfully"
     )
@@ -96,17 +107,12 @@ const loginUser = asyncHandler(async (req: Request, res: Response) => {
     where: { email },
   });
 
-  if (!user) {
-    throw new ApiError(404, "User not found");
-  }
-
-  const isPasswordCorrect = await bcrypt.compare(password, user.password);
-  if (!isPasswordCorrect) {
+  if (!user || !(await bcrypt.compare(password, user.password))) {
     throw new ApiError(401, "Invalid credentials");
   }
 
-  const accessToken = generateAccessToken(user.id);
-  const refreshToken = generateRefreshToken(user.id);
+  const accessToken = generateAccessToken(user.id, user.username);
+  const refreshToken = generateRefreshToken(user.id, user.username);
 
   await prisma.user.update({
     where: { id: user.id },
@@ -120,7 +126,7 @@ const loginUser = asyncHandler(async (req: Request, res: Response) => {
     new ApiResponse(
       200,
       {
-        user: { id: user.id, email: user.email },
+        user: { id: user.id, username: user.username, email: user.email },
         accessToken,
         refreshToken,
       },
@@ -145,35 +151,38 @@ const logoutUser = asyncHandler(async (req: Request, res: Response) => {
   res.clearCookie("AccessToken");
   res.clearCookie("RefreshToken");
 
-  return res
-    .status(200)
-    .json(new ApiResponse(200, {}, "User logged out successfully"));
+  return res.status(200).json(new ApiResponse(200, {}, "User logged out successfully"));
 });
 
 // Refresh Access Token
 const refreshAccessToken = asyncHandler(async (req: Request, res: Response) => {
-  const { refreshToken } = req.cookies;
+  const { RefreshToken } = req.cookies;
 
-  if (!refreshToken) {
+  if (!RefreshToken) {
     throw new ApiError(401, "No refresh token provided");
   }
 
   try {
-    const { userId } = jwt.verify(
-      refreshToken,
-      process.env.REFRESH_TOKEN_SECRET!
-    ) as { userId: number };
+    const secret = process.env.REFRESH_TOKEN_SECRET;
+    if (!secret) {
+      throw new Error("REFRESH_TOKEN_SECRET is not defined");
+    }
+
+    const { userId, username } = jwt.verify(RefreshToken, secret) as {
+      userId: number;
+      username: string;
+    };
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
     });
 
-    if (!user || user.refreshToken !== refreshToken) {
+    if (!user || user.refreshToken !== RefreshToken) {
       throw new ApiError(403, "Invalid refresh token");
     }
 
-    const newAccessToken = generateAccessToken(userId);
-    const newRefreshToken = generateRefreshToken(userId);
+    const newAccessToken = generateAccessToken(userId, username);
+    const newRefreshToken = generateRefreshToken(userId, username);
 
     await prisma.user.update({
       where: { id: userId },
@@ -181,10 +190,7 @@ const refreshAccessToken = asyncHandler(async (req: Request, res: Response) => {
     });
 
     res.cookie("AccessToken", newAccessToken, { httpOnly: true, secure: true });
-    res.cookie("RefreshToken", newRefreshToken, {
-      httpOnly: true,
-      secure: true,
-    });
+    res.cookie("RefreshToken", newRefreshToken, { httpOnly: true, secure: true });
 
     return res.status(200).json(
       new ApiResponse(
@@ -202,49 +208,9 @@ const refreshAccessToken = asyncHandler(async (req: Request, res: Response) => {
 });
 
 // Change Password
-const changeCurrentPassword = asyncHandler(
-  async (req: Request, res: Response) => {
-    const { oldPassword, newPassword, confirmPassword } = req.body;
-
-    if (newPassword !== confirmPassword) {
-      throw new ApiError(400, "Passwords do not match");
-    }
-
-    const userId = req.user?.userId;
-
-    if (!userId) {
-      throw new ApiError(401, "User not authenticated");
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-    });
-
-    if (!user) {
-      throw new ApiError(404, "User not found");
-    }
-
-    const isPasswordCorrect = await bcrypt.compare(oldPassword, user.password);
-    if (!isPasswordCorrect) {
-      throw new ApiError(400, "Incorrect old password");
-    }
-
-    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
-
-    await prisma.user.update({
-      where: { id: userId },
-      data: { password: hashedNewPassword },
-    });
-
-    return res
-      .status(200)
-      .json(new ApiResponse(200, {}, "Password changed successfully"));
-  }
-);
-
-// Ensure this endpoint is protected and requires authentication
-const getCurrentUser = asyncHandler(async (req: Request, res: Response) => {
-  const userId = req.user?.userId;  // Assuming req.user is set by authentication middleware
+const changeCurrentPassword = asyncHandler(async (req: Request, res: Response) => {
+  const { oldPassword, newPassword } = req.body;
+  const userId = req.user?.userId;
 
   if (!userId) {
     throw new ApiError(401, "User not authenticated");
@@ -252,21 +218,89 @@ const getCurrentUser = asyncHandler(async (req: Request, res: Response) => {
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { email: true, username: true },
   });
 
   if (!user) {
     throw new ApiError(404, "User not found");
   }
 
-  return res.status(200).json(new ApiResponse(200, user, "Current user fetched successfully"));
+  const isPasswordCorrect = await bcrypt.compare(oldPassword, user.password);
+  if (!isPasswordCorrect) {
+    throw new ApiError(400, "Incorrect old password");
+  }
+
+  const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { password: hashedNewPassword },
+  });
+
+  return res.status(200).json(new ApiResponse(200, {}, "Password changed successfully"));
 });
+
+// Get Current User Profile by Username
+const getCurrentUserProfileByUsername = asyncHandler(async (req: Request, res: Response) => {
+  const username = req.params.username?.toLowerCase();
+
+  if (!username) {
+    throw new ApiError(400, "Username is required");
+  }
+
+  const user = await prisma.user.findFirst({
+    where: {
+      username: username,
+    },
+    select: {
+      id: true,
+      username: true,
+      email: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  return res.status(200).json(new ApiResponse(200, user, "User profile fetched successfully"));
+});
+
+const me = asyncHandler(async (req: Request, res: Response) => {
+  const username = req.params.username?.toLowerCase();
+
+  if (!username) {
+    throw new ApiError(400, "Username is required");
+  }
+
+  const user = await prisma.user.findFirst({
+    where: {
+      username: username,
+    },
+    select: {
+      id: true,
+      username: true,
+      email: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  return res.status(200).json(new ApiResponse(200, user, "my profile fetched successfully"));
+})
 
 export {
   registerUser,
   allUsers,
   loginUser,
-  getCurrentUser,
+  getCurrentUserProfileByUsername,
   changeCurrentPassword,
   logoutUser,
+  me,
+  refreshAccessToken,
 };

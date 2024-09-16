@@ -1,10 +1,9 @@
-"use client"
+"use client";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -14,31 +13,53 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/footer";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import toast from 'react-hot-toast';
 
+import { useState } from "react";
+import { useToast } from "@/components/hooks/use-toast"
+import { ToastAction } from "@/components/ui/toast";
 const LoginForm = () => {
+  const [formData, setFormData] = useState({
+    username: "",
+    email: "",
+    password: ""
+  });
 
-    const router = useRouter();
+  const router = useRouter();
+  const { toast } = useToast()
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    const data = {
-      username: form.get("username"),
-      email: form.get("email"),
-      password: form.get("password"),
-    };
-
     try {
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/user/signup`,
-        data
+        formData, // send formData as an object, not FormData
+        {
+          headers: {
+            "Content-Type": "application/json"
+          },
+          withCredentials: true, // Make sure cookies are handled properly
+        }
       );
-      router.push('/dashboard');
-      toast.success('Account created successfully');
-      console.log(response.data);
+     
+      router.push(`/signin`);
+      toast({
+        description: "Account created successfully.",
+      })
+      
     } catch (error) {
       console.error(error);
-      toast.error('Account creation failed');
+      toast({
+        variant: "destructive",
+        title: "Uh oh! Something went wrong.",
+        description: "There was a problem with your request.",
+        action: <ToastAction altText="Try again">Try again</ToastAction>,
+      })
     }
   };
 
@@ -48,7 +69,6 @@ const LoginForm = () => {
       <Card className="mx-auto max-w-sm mt-24 mb-10">
         <CardHeader>
           <CardTitle className="text-xl">Sign Up</CardTitle>
-         
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="grid gap-4">
@@ -60,6 +80,8 @@ const LoginForm = () => {
                 type="text"
                 placeholder="aicodex"
                 required
+                value={formData.username}
+                onChange={handleChange}
               />
             </div>
             <div className="grid gap-2">
@@ -70,6 +92,8 @@ const LoginForm = () => {
                 type="email"
                 placeholder="aicodex@arihant.us"
                 required
+                value={formData.email}
+                onChange={handleChange}
               />
             </div>
             <div className="grid gap-2">
@@ -80,6 +104,8 @@ const LoginForm = () => {
                 type="password"
                 placeholder="Your password"
                 required
+                value={formData.password}
+                onChange={handleChange}
               />
             </div>
             <Button type="submit" className="w-full">

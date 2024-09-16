@@ -9,7 +9,7 @@ import Footer from "@/components/footer";
 import Navbar from "@/components/Navbar";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import toast from 'react-hot-toast';
+import toast from "react-hot-toast";
 
 const SignIn = () => {
   const router = useRouter();
@@ -27,13 +27,18 @@ const SignIn = () => {
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/user/signin`,
         data
       );
-      // Assuming your backend sets the cookies
-      router.push("/dashboard");
-      toast.success('Login successful');
-      console.log(response.data);
+
+      // Check if the response contains user data and extract username
+      const { user, accessToken } = response.data.data;
+
+      // After successful login, save token and redirect
+      localStorage.setItem("accessToken", accessToken);
+      router.push(`/dashboard/${user.username}`);
+
+      toast.success("Login successful");
     } catch (error) {
       console.error(error);
-      toast.error('Login failed');
+      toast.error("Login failed");
     }
   };
 
@@ -51,7 +56,7 @@ const SignIn = () => {
                 <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
-                  name="email"  // Added name attribute
+                  name="email"
                   type="email"
                   placeholder="m@example.com"
                   required
@@ -69,7 +74,7 @@ const SignIn = () => {
                 </div>
                 <Input
                   id="password"
-                  name="password"  // Added name attribute
+                  name="password"
                   type="password"
                   required
                 />

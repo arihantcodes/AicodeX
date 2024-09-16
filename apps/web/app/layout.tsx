@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
-
+import { Toaster } from "@/components/ui/toaster"
 const fontSans = Poppins({
   subsets: ["latin"],
   display: "swap",
@@ -29,7 +29,9 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
+            
         {children}
+        <Toaster />
         </ThemeProvider>
       </body>
     </html>

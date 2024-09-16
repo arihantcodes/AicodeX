@@ -1,37 +1,62 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@repo/db';
+import ApiError from '../../utils/apierror';
 
 const prisma = new PrismaClient();
 
-const authenticateUser = async (req: Request, res: Response, next: NextFunction) => {
-  const token = req.headers.authorization?.split(' ')[1]; // Extract token from Bearer scheme
-
-  if (!token) {
-    return res.status(401).json({ message: 'No token provided' });
+declare global {
+  namespace Express {
+    interface Request {
+      user?: {
+        userId: number;
+        username: string;
+      };
+    }
   }
+}
 
+export const verifyJWT = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET!) as { userId: number };
+    const token = req.cookies?.AccessToken || req.header("Authorization")?.replace("Bearer ", "");
 
-    // Optionally fetch user from database if needed
+    if (!token) {
+      throw new ApiError(401, "Unauthorized request");
+    }
+
+    const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET!) as jwt.JwtPayload;
+
     const user = await prisma.user.findUnique({
-      where: { id: decoded.userId }
+      where: { id: decodedToken.userId },
+      select: { id: true, username: true }
     });
 
     if (!user) {
-      return res.status(401).json({ message: 'Invalid token' });
+      throw new ApiError(401, "Invalid Access Token");
     }
 
-    req.user = {
-      userId: user.id,
-      email: user.email
-    };
-
+    req.user = { userId: user.id, username: user.username };
     next();
-  } catch (error) {
-    return res.status(401).json({ message: 'Invalid or expired token' });
+  } catch (error: any) {
+    throw new ApiError(401, error?.message || "Invalid access token");
   }
 };
 
-export default authenticateUser;
+export const authorizeRoles = (...allowedRoles: string[]) => {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    if (!req.user?.userId) {
+      throw new ApiError(401, "Unauthorized request");
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.userId },
+      
+    });
+
+    if (!user) {
+      throw new ApiError(403, "You are not allowed to access this resource");
+    }
+
+    next();
+  };
+};

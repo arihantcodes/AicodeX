@@ -1,12 +1,33 @@
 import { Router } from 'express';
-import { allUsers, getCurrentUser, loginUser, registerUser } from '../controllers/signup';
-import authenticateUser from '../middleware/authMiddleware'; // Import your middleware
+import {
+  allUsers,
+  registerUser,
+  loginUser,
+  getCurrentUserProfileByUsername,
+  changeCurrentPassword,
+  logoutUser,
+  refreshAccessToken,
+  me
+} from '../controllers/signup';
+import { verifyJWT, authorizeRoles } from '../middleware/authMiddleware';
 
-const userrouter = Router();
+const userRouter = Router();
 
-userrouter.route('/get').get(allUsers);
-userrouter.route('/signup').post(registerUser);
-userrouter.route('/signin').post(loginUser);
-userrouter.route('/getuser').get(authenticateUser, getCurrentUser); // Protect this route with middleware
+// Public routes
+userRouter.post('/signup', registerUser);
+userRouter.post('/signin', loginUser);
+userRouter.get('/dashboard/:username', me);
+userRouter.post('/refresh-token', refreshAccessToken);
 
-export default userrouter;
+
+// Protected routes
+userRouter.use(verifyJWT); // Apply JWT verification to all routes below
+
+userRouter.get('/logout', logoutUser);
+userRouter.get('/profile/:username', getCurrentUserProfileByUsername);
+userRouter.post('/change-password', changeCurrentPassword);
+
+// Admin only route
+userRouter.get('/all',  allUsers);
+
+export default userRouter;
