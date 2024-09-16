@@ -1,23 +1,23 @@
-"use client"
+"use client";
 
-import React, { useState } from 'react'
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { ModeToggle } from './moon'
-import { Menu, X } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import React, { useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { ModeToggle } from "./moon";
+import { Menu, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const navItems = [
-  { href: '/', label: 'Home' },
-  { href: '/features', label: 'Features' },
-  { href: '/pricing', label: 'Pricing' },
-  { href: '/about', label: 'About' },
-]
+  { href: "/", label: "Home" },
+  { href: "/features", label: "Features" },
+  { href: "/pricing", label: "Pricing" },
+  { href: "/about", label: "About" },
+];
 
 export default function Navbar() {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const pathname = usePathname()
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const pathname = usePathname();
 
   return (
     <nav className="bg-background shadow-lg sticky top-0 z-50">
@@ -51,12 +51,17 @@ export default function Navbar() {
           </div>
 
           <div className="hidden md:flex items-center space-x-4">
+            <ModeToggle />
             <Link href="/signup">
               <Button className="hover:bg-primary/90 transition duration-300">
                 Create Account
               </Button>
             </Link>
-            <ModeToggle />
+            <Link href="/signin">
+              <Button variant="outline" size="lg" className=" transition duration-300">
+                Login
+              </Button>
+            </Link>
           </div>
 
           <div className="md:hidden flex items-center">
@@ -107,5 +112,5 @@ export default function Navbar() {
         </div>
       )}
     </nav>
-  )
+  );
 }

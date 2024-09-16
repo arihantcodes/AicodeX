@@ -21,4 +21,21 @@ model User {
   refreshToken String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  Project Project[]
 }
+
+
+//Users project model & language model like python, javascript, c++,java, etc
+
+model Project {
+  id        Int      @id @default(autoincrement())
+  projectname      String
+  description String
+  language  String
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+

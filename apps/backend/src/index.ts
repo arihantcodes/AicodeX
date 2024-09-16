@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { PrismaClient } from '@repo/db';
 import userrouter from './routes/user.route';
+import projectRouter from './routes/project.route';
 
 dotenv.config();
 
@@ -20,6 +21,7 @@ app.use(cors(corsOptions));
 app.use(express.json());
 
 app.use("/api/v1/user",userrouter)
+app.use("/api/v1/",projectRouter)
 
 app.on("error", (error) => {
   console.log("Error on the server", error);
