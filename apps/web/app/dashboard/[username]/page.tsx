@@ -1,10 +1,10 @@
 "use client";
-import React from "react";
+
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useEffect, useState } from 'react';
-import axios from 'axios';
-import { useRouter } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -21,45 +21,74 @@ import {
   Settings,
   LogOut,
   Code,
-  FileText,
-  Folder,
-  Play,
-  Terminal,
   Star,
   Users,
-  Clock,
+  Terminal,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
-export default function CloudIDEDashboard() {
-  const [user, setUser] = useState<{ email: string; username: string } | null>(null);
+interface UserData {
+  username: string;
+  email: string;
+  projects?: Array<{
+    name: string;
+    description: string;
+  }>;
+}
+
+const Dashboard = () => {
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const params = useParams();
   const router = useRouter();
+
   useEffect(() => {
-    const fetchUser = async () => {
+    const fetchDashboardData = async () => {
       try {
-        const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/user/getuser`, {
-          withCredentials: true,  // Include cookies in the request if needed
+        const token = localStorage.getItem("accessToken");
+        if (!token) {
+          throw new Error("Token not found. Please log in again.");
+        }
+  
+        const username = params.username as string;
+        if (!username) {
+          throw new Error("Username not found in URL.");
+        }
+  
+        const response = await axios.get(`http://localhost:3006/api/v1/user/dashboard/${username}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          }
         });
-        setUser(response.data.data);  // Adjust according to your response structure
-      } catch (error) {
-        console.error('Error fetching user details:', error);
-      
+  
+        console.log(response);  // Log response to ensure data is received
+        setUserData(response.data.data);
+        setLoading(false);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An error occurred');
+        setLoading(false);
       }
     };
+  
+    fetchDashboardData();
+  }, [params.username]);
+  
+  const handleLogout = () => {
+    localStorage.removeItem('accessToken');
+    router.push('/signin');
+  };
 
-    fetchUser();
-  }, [router]);
 
-
+  
   return (
     <div className="flex h-screen">
       {/* Sidebar */}
-      <div className="w-64 p-4 flex flex-col">
+      <div className="w-64 p-4 flex flex-col border-r-2 border-blue-300">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center">
-            <Avatar className="h-8 w-8">
-              <AvatarFallback>AK</AvatarFallback>
-            </Avatar>
-            <span className="ml-2 font-semibold">{user.username}</span>
+          
+            <span className="ml-2 font-semibold">{userData?.username}</span>
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -70,10 +99,8 @@ export default function CloudIDEDashboard() {
             <DropdownMenuContent className="w-56" align="end" forceMount>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">
-                    Alicia Koch
-                  </p>
-                  <p className="text-xs leading-none">{user.email}</p>
+                  <p className="text-sm font-medium leading-none">username{userData?.username}</p>
+                  <p className="text-xs leading-none">{userData?.email}</p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
@@ -81,7 +108,7 @@ export default function CloudIDEDashboard() {
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Settings</span>
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={handleLogout}>
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Log out</span>
               </DropdownMenuItem>
@@ -91,7 +118,7 @@ export default function CloudIDEDashboard() {
         <Button className="mb-6">
           <Plus className="mr-2 h-4 w-4" /> New Project
         </Button>
-        <nav className="space-y-2">
+        <nav className="space-y-2 ">
           <Button variant="ghost" className="w-full justify-start">
             <Star className="mr-2 h-4 w-4" /> Favorites
           </Button>
@@ -127,7 +154,18 @@ export default function CloudIDEDashboard() {
               <TabsTrigger value="recent">Recent</TabsTrigger>
               <TabsTrigger value="shared">Shared with me</TabsTrigger>
             </TabsList>
-            <TabsContent value="projects" className="space-y-4"></TabsContent>
+            <TabsContent value="projects" className="space-y-4">
+              {userData?.projects && userData.projects.length > 0 ? (
+                userData.projects.map((project, index) => (
+                  <div key={index} className="p-4 border rounded">
+                    <h3 className="text-lg font-semibold">{project.name}</h3>
+                    <p>{project.description}</p>
+                  </div>
+                ))
+              ) : (
+                <p>No projects found.</p>
+              )}
+            </TabsContent>
             <TabsContent value="recent">
               <p>Your recent projects will appear here.</p>
             </TabsContent>
@@ -139,4 +177,6 @@ export default function CloudIDEDashboard() {
       </div>
     </div>
   );
-}
+};
+
+export default Dashboard;
