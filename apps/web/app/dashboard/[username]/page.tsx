@@ -26,7 +26,9 @@ import {
   Terminal,
   MoreVertical,
   Trash,
+  
 } from "lucide-react";
+import Link  from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Dialog,
@@ -69,6 +71,7 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Calendar } from "lucide-react";
+
 interface UserData {
   username: string;
   email: string;
@@ -79,6 +82,7 @@ interface UserData {
 }
 
 const Dashboard = () => {
+
   const { toast } = useToast();
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -416,6 +420,7 @@ const Dashboard = () => {
                   >
                     {projects.map((project) => (
                       <motion.div key={project.id} variants={itemVariants}>
+                        <Link href={`/editor/${project.projectname}?language=${project.language}`}>
                         <Card className="h-full flex flex-col hover:shadow-lg transition-shadow duration-300">
                           <CardHeader className="flex justify-between items-start">
                             <div className="flex justify-evenly">
@@ -478,6 +483,7 @@ const Dashboard = () => {
                             </div>
                           </CardFooter>
                         </Card>
+                        </Link>
                       </motion.div>
                     ))}
                   </motion.div>
