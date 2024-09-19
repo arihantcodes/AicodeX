@@ -57,7 +57,7 @@ const LoginForm = () => {
       toast({
         variant: "destructive",
         title: "Uh oh! Something went wrong.",
-        description: "There was a problem with your request.",
+        description: "Account creation failed.",
         action: <ToastAction altText="Try again">Try again</ToastAction>,
       })
     }
