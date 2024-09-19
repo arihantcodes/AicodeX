@@ -1,7 +1,7 @@
 /* eslint-disable no-undef */
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Editor, { loader } from "@monaco-editor/react";
 import {
   Folder,
@@ -50,7 +50,42 @@ export default function CodeIDE() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const language = searchParams.get("language");
+  const [input, setInput] = useState("");
+  const [output, setOutput] = useState<string[]>(["Welcome to MacTerminal"]);
+  const terminalRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      const command = input.trim();
+      setOutput((prev) => [...prev, `$ ${command}`, processCommand(command)]);
+      setInput("");
+    }
+  };
+
+  const processCommand = (command: string): string => {
+    switch (command.toLowerCase()) {
+      case "help":
+        return "Available commands: help, clear, date, echo [text]";
+      case "clear":
+        setTimeout(() => setOutput([]), 0);
+        return "";
+      case "date":
+        return new Date().toString();
+      default:
+        if (command.toLowerCase().startsWith("echo ")) {
+          return command.slice(5);
+        }
+        return `Command not found: ${command}`;
+    }
+  };
+
+  useEffect(() => {
+    if (terminalRef.current) {
+      terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
+    }
+    inputRef.current?.focus();
+  }, [output]);
   useEffect(() => {
     if (language) {
       initializeProject(language);
@@ -592,70 +627,129 @@ int main() {
 
   return (
     <>
-      <div className="flex h-screen bg-background">
-      <div className="w-64 border-r border-gray-700 overflow-auto p-4 bg-background">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold text-gray-300">Files</h2>
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button variant="ghost" size="icon" onClick={() => setCurrentPath("")}>
-                <Plus className="h-4 w-4" />
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create New {newItemType === "file" ? "File" : "Folder"}</DialogTitle>
-              </DialogHeader>
-              <div className="flex flex-col space-y-4">
-                <div className="flex space-x-2">
+      <div className="flex h-screen bg-[#020817] text-white">
+        <div className="w-64 bg-[#010305] overflow-auto border-r border-gray-800">
+          <div className="p-4">
+            <h2 className="text-sm font-semibold mb-2 text-gray-400">
+              EXPLORER
+            </h2>
+            <div className="flex justify-between items-center mb-4">
+              <Dialog
+                open={isCreateDialogOpen}
+                onOpenChange={setIsCreateDialogOpen}
+              >
+                <DialogTrigger asChild>
                   <Button
-                    variant={newItemType === "file" ? "default" : "outline"}
-                    onClick={() => setNewItemType("file")}
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setCurrentPath("")}
                   >
-                    <FileIcon className="w-4 h-4 mr-2" />
-                    File
+                    <Plus className="h-4 w-4" />
                   </Button>
-                  <Button
-                    variant={newItemType === "folder" ? "default" : "outline"}
-                    onClick={() => setNewItemType("folder")}
-                  >
-                    <FolderPlus className="w-4 h-4 mr-2" />
-                    Folder
-                  </Button>
-                </div>
-                <Input
-                  placeholder={`Enter ${newItemType} name`}
-                  value={newItemName}
-                  onChange={(e) => setNewItemName(e.target.value)}
-                />
-                <Button onClick={handleCreateItem}>Create</Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
-        {renderFileSystem(fileSystem)}
-      </div>
-      <div className="flex-1 bg-[#1e1e1e]">
-        {selectedFile ? (
-          <Editor
-            height="100%"
-            defaultLanguage={language || "plaintext"}
-            value={selectedFile.content}
-            theme="customTheme"
-            options={{
-              minimap: { enabled: false },
-              fontSize: 18,
-              cursorSmoothCaretAnimation: "on",
-              fontFamily: "'Fira Code', monospace",
-            }}
-          />
-        ) : (
-          <div className="flex items-center justify-center h-full bg-background text-gray-200">
-            Select a file to edit
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>
+                      Create New {newItemType === "file" ? "File" : "Folder"}
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="flex flex-col space-y-4">
+                    <div className="flex space-x-2">
+                      <Button
+                        variant={newItemType === "file" ? "default" : "outline"}
+                        onClick={() => setNewItemType("file")}
+                      >
+                        <FileIcon className="w-4 h-4 mr-2" />
+                        File
+                      </Button>
+                      <Button
+                        variant={
+                          newItemType === "folder" ? "default" : "outline"
+                        }
+                        onClick={() => setNewItemType("folder")}
+                      >
+                        <FolderPlus className="w-4 h-4 mr-2" />
+                        Folder
+                      </Button>
+                    </div>
+                    <Input
+                      placeholder={`Enter ${newItemType} name`}
+                      value={newItemName}
+                      onChange={(e) => setNewItemName(e.target.value)}
+                    />
+                    <Button onClick={handleCreateItem}>Create</Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+            {renderFileSystem(fileSystem)}
           </div>
-        )}
+        </div>
+        <div className="flex flex-col flex-1">
+          <div className="flex-1 overflow-hidden ">
+            {selectedFile ? (
+              <Editor
+                height="100%"
+                defaultLanguage={language || "plaintext"}
+                value={selectedFile.content}
+                theme="customTheme"
+                options={{
+                  minimap: { enabled: false },
+                  fontSize: 18,
+                  lineNumbers: "on",
+                  roundedSelection: false,
+                  scrollBeyondLastLine: false,
+                  readOnly: false,
+                  cursorStyle: "line",
+                  automaticLayout: true,
+                  
+                }}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full bg-[#020817] text-gray-400">
+                Select a file to edit
+              </div>
+            )}
+          </div>
+          {/* add scrool area in terminal  */}
+
+          <div className="h-64 bg-[#020817] border-t overflow-hidden border-gray-800">
+            <div className="flex items-center bg-[#010305] text-sm border-b border-gray-800">
+              <div className="px-4 py-1 bg-[#020817] text-white">TERMINAL</div>
+              <div className="px-4 py-1 text-gray-400">OUTPUT</div>
+              <div className="px-4 py-1 text-gray-400">DEBUG CONSOLE</div>
+            </div>
+            <div
+              ref={terminalRef}
+              className="h-full overflow-auto p-2 font-mono text-sm"
+            >
+              {output.map((line, index) => (
+                <div
+                  key={index}
+                  className={
+                    line.startsWith("PS") ? "text-[#569CD6]" : "text-white"
+                  }
+                >
+                  {line}
+                </div>
+              ))}
+              <div className="flex items-center">
+                <span className="text-[#569CD6] mr-2">
+                  PS E:\aicodex\apps\web&gt;
+                </span>
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  className="bg-transparent text-green-400 focus:outline-none flex-1"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
     </>
   );
 }

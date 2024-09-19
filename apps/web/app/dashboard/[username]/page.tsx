@@ -26,9 +26,8 @@ import {
   Terminal,
   MoreVertical,
   Trash,
-  
 } from "lucide-react";
-import Link  from "next/link";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Dialog,
@@ -71,7 +70,7 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Calendar } from "lucide-react";
-
+import ClipLoader from "react-spinners/ClipLoader";
 interface UserData {
   username: string;
   email: string;
@@ -82,7 +81,6 @@ interface UserData {
 }
 
 const Dashboard = () => {
-
   const { toast } = useToast();
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -98,7 +96,7 @@ const Dashboard = () => {
   }
 
   const [projects, setProjects] = useState<Project[]>([]);
-
+  const [isLoading, setIsLoading] = useState(false);
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
@@ -113,7 +111,7 @@ const Dashboard = () => {
         }
 
         const response = await axios.get(
-          `http://localhost:3006/api/v1/user/dashboard/${username}`,
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/user/dashboard/${username}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -140,17 +138,19 @@ const Dashboard = () => {
 
   const createproject = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setIsLoading(true); // Start loading when form is submitted
     const form = e.currentTarget as HTMLFormElement;
     const formData = new FormData(form);
     const token = localStorage.getItem("accessToken");
 
     if (!token) {
+      setIsLoading(false);
       return;
     }
 
     try {
       const response = await axios.post(
-        "http://localhost:3006/api/v1/createproject",
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/createproject`,
         {
           projectname: formData.get("projectname"),
           description: formData.get("description"),
@@ -158,21 +158,23 @@ const Dashboard = () => {
         },
         {
           headers: {
-            Authorization: `Bearer ${token}`, // Pass the token in the Authorization header
+            Authorization: `Bearer ${token}`,
           },
         }
       );
       console.log("Project created:", response.data);
       toast({
-        description: "project created successfully",
+        description: "Project created successfully",
       });
+      window.location.reload(); // Reload after successful creation
     } catch (err) {
       console.error("Error creating project:", err);
       toast({
         title: "Uh oh! Something went wrong.",
         description: "There was a problem with your request.",
-        action: <ToastAction altText="Try again">Try again</ToastAction>,
       });
+    } finally {
+      setIsLoading(false); // Stop loading when done
     }
   };
 
@@ -186,7 +188,7 @@ const Dashboard = () => {
 
     try {
       const response = await axios.get(
-        "http://localhost:3006/api/v1/allprojects",
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/allprojects`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -239,20 +241,25 @@ const Dashboard = () => {
 
     try {
       const response = await axios.delete(
-        `http://localhost:3006/api/v1/deleteproject/${id}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/deleteproject/${id}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }
       );
-
+      window.location.reload();
       console.log("Project deleted:", response.data);
     } catch (err) {
       console.error("Error deleting project:", err);
       setError("Failed to delete project");
     }
   };
+
+  // when project is created so autorefresh the page
+
+  useEffect(() => {}, []);
+
   return (
     <div className="flex h-screen">
       {/* Sidebar */}
@@ -288,6 +295,7 @@ const Dashboard = () => {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+        {/* project create here */}
         <Dialog>
           <DialogTrigger asChild>
             <Button className="mb-6">
@@ -309,6 +317,7 @@ const Dashboard = () => {
                     id="projectname"
                     name="projectname"
                     placeholder="Name of your project"
+                    required
                   />
                 </div>
                 <div className="flex flex-col space-y-1.5">
@@ -317,11 +326,12 @@ const Dashboard = () => {
                     id="description"
                     name="description"
                     placeholder="Description of your project"
+                    required
                   />
                 </div>
                 <div className="flex flex-col space-y-1.5">
                   <Label htmlFor="language">Language</Label>
-                  <Select name="language">
+                  <Select name="language" required>
                     <SelectTrigger id="language">
                       <SelectValue placeholder="Select" />
                     </SelectTrigger>
@@ -334,14 +344,22 @@ const Dashboard = () => {
                   </Select>
                 </div>
               </div>
-              <Button type="submit" className="mt-6 ml-24">
-                Create Project
-              </Button>
+
+              {/* Loading Spinner */}
+              {isLoading ? (
+                <div className="flex justify-center mt-6">
+                  <ClipLoader color={"#123abc"} loading={isLoading} size={35} />
+                </div>
+              ) : (
+                <Button type="submit" className="mt-6 ml-24">
+                  Create Project
+                </Button>
+              )}
             </form>
             <DialogFooter></DialogFooter>
           </DialogContent>
         </Dialog>
-
+        {/* side navabar */}
         <nav className="space-y-2 ">
           <Button variant="ghost" className="w-full justify-start">
             <Star className="mr-2 h-4 w-4" /> Favorites
@@ -420,13 +438,16 @@ const Dashboard = () => {
                   >
                     {projects.map((project) => (
                       <motion.div key={project.id} variants={itemVariants}>
-                        <Link href={`/editor/${project.projectname}?language=${project.language}`}>
                         <Card className="h-full flex flex-col hover:shadow-lg transition-shadow duration-300">
                           <CardHeader className="flex justify-between items-start">
                             <div className="flex justify-evenly">
-                              <CardTitle className="text-xl font-semibold truncate">
-                                {project.projectname}
-                              </CardTitle>
+                              <Link
+                                href={`/editor/${project.projectname}?language=${project.language}`}
+                              >
+                                <CardTitle className="text-xl font-semibold truncate">
+                                  {project.projectname}
+                                </CardTitle>
+                              </Link>
                               <AlertDialog>
                                 <DropdownMenu>
                                   <DropdownMenuTrigger asChild>
@@ -483,7 +504,6 @@ const Dashboard = () => {
                             </div>
                           </CardFooter>
                         </Card>
-                        </Link>
                       </motion.div>
                     ))}
                   </motion.div>
