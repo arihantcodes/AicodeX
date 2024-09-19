@@ -1,9 +1,33 @@
 /* eslint-disable no-undef */
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Editor, { loader } from "@monaco-editor/react";
-import { Folder, File, ChevronRight, ChevronDown } from "lucide-react";
+import {
+  Folder,
+  File,
+  ChevronRight,
+  ChevronDown,
+  Plus,
+  FolderPlus,
+  FileIcon,
+} from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 type FileSystemItem = {
   name: string;
@@ -13,26 +37,152 @@ type FileSystemItem = {
 };
 
 export default function CodeIDE() {
-  const [fileSystem, setFileSystem] = useState<FileSystemItem[]>([
-    {
-      name: "src",
-      type: "folder",
-      children: [
-        { name: "index.js", type: "file", content: "// Write your code here" },
-        {
-          name: "styles.css",
-          type: "file",
-          content: "/* Add your styles here */",
-        },
-      ],
-    },
-    { name: "README.md", type: "file", content: "# Project README" },
-  ]);
-
   const [selectedFile, setSelectedFile] = useState<FileSystemItem | null>(null);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
     new Set(["src"])
   );
+  const [fileSystem, setFileSystem] = useState<FileSystemItem[]>([]);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [newItemName, setNewItemName] = useState("");
+  const [newItemType, setNewItemType] = useState<"file" | "folder">("file");
+  const [currentPath, setCurrentPath] = useState("");
+
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const language = searchParams.get("language");
+  const [input, setInput] = useState("");
+  const [output, setOutput] = useState<string[]>(["Welcome to MacTerminal"]);
+  const terminalRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      const command = input.trim();
+      setOutput((prev) => [...prev, `$ ${command}`, processCommand(command)]);
+      setInput("");
+    }
+  };
+
+  const processCommand = (command: string): string => {
+    switch (command.toLowerCase()) {
+      case "help":
+        return "Available commands: help, clear, date, echo [text]";
+      case "clear":
+        setTimeout(() => setOutput([]), 0);
+        return "";
+      case "date":
+        return new Date().toString();
+      default:
+        if (command.toLowerCase().startsWith("echo ")) {
+          return command.slice(5);
+        }
+        return `Command not found: ${command}`;
+    }
+  };
+
+  useEffect(() => {
+    if (terminalRef.current) {
+      terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
+    }
+    inputRef.current?.focus();
+  }, [output]);
+  useEffect(() => {
+    if (language) {
+      initializeProject(language);
+    }
+  }, [language]);
+
+  const initializeProject = (lang: string) => {
+    let initialFileSystem: FileSystemItem[] = [];
+
+    switch (lang) {
+      case "java":
+        initialFileSystem = [
+          {
+            name: "src",
+            type: "folder",
+            children: [
+              {
+                name: "Main.java",
+                type: "file",
+                content: `public class Main {
+  public static void main(String[] args) {
+    System.out.println("Hello, Java!");
+  }
+}`,
+              },
+            ],
+          },
+        ];
+        break;
+      case "javascript":
+        initialFileSystem = [
+          {
+            name: "src",
+            type: "folder",
+            children: [
+              {
+                name: "index.js",
+                type: "file",
+                content: `console.log("Hello, JavaScript!");`,
+              },
+            ],
+          },
+        ];
+        break;
+      case "python":
+        initialFileSystem = [
+          {
+            name: "src",
+            type: "folder",
+            children: [
+              {
+                name: "app.py",
+                type: "file",
+                content: `print("Hello, Python!")`,
+              },
+            ],
+          },
+        ];
+        break;
+      case "c++":
+        initialFileSystem = [
+          {
+            name: "src",
+            type: "folder",
+            children: [
+              {
+                name: "main.cpp",
+                type: "file",
+                content: `#include <iostream>
+
+int main() {
+  std::cout << "Hello, C++!" << std::endl;
+  return 0;
+}`,
+              },
+            ],
+          },
+        ];
+        break;
+      default:
+        initialFileSystem = [
+          {
+            name: "src",
+            type: "folder",
+            children: [
+              {
+                name: "main.txt",
+                type: "file",
+                content: `Hello, World!`,
+              },
+            ],
+          },
+        ];
+    }
+
+    setFileSystem(initialFileSystem);
+  };
 
   const handleFileSelect = (file: FileSystemItem) => {
     if (file.type === "file") {
@@ -52,51 +202,123 @@ export default function CodeIDE() {
     });
   };
 
+  const addItem = (path: string, newItem: FileSystemItem) => {
+    const pathParts = path.split("/").filter(Boolean);
+    const updateFileSystem = (items: FileSystemItem[]): FileSystemItem[] => {
+      if (pathParts.length === 0) {
+        return [...items, newItem];
+      }
+      return items.map((item) => {
+        if (item.name === pathParts[0] && item.type === "folder") {
+          return {
+            ...item,
+            children: updateFileSystem(item.children || []),
+          };
+        }
+        return item;
+      });
+    };
+    setFileSystem(updateFileSystem(fileSystem));
+  };
+
+  const handleCreateItem = () => {
+    if (newItemName) {
+      const newItem: FileSystemItem = {
+        name: newItemName,
+        type: newItemType,
+        ...(newItemType === "folder" ? { children: [] } : { content: "" }),
+      };
+      addItem(currentPath, newItem);
+      setNewItemName("");
+      setIsCreateDialogOpen(false);
+    }
+  };
+
+  const handleDeleteItem = (path: string) => {
+    const pathParts = path.split("/").filter(Boolean);
+    const updateFileSystem = (items: FileSystemItem[]): FileSystemItem[] => {
+      if (pathParts.length === 1) {
+        return items.filter((item) => item.name !== pathParts[0]);
+      }
+      return items.map((item) => {
+        if (item.name === pathParts[0] && item.type === "folder") {
+          return {
+            ...item,
+            children: updateFileSystem(item.children || []),
+          };
+        }
+        return item;
+      });
+    };
+    setFileSystem(updateFileSystem(fileSystem));
+    if (selectedFile && path.endsWith(selectedFile.name)) {
+      setSelectedFile(null);
+    }
+  };
+
   const renderFileSystem = (items: FileSystemItem[], path: string = "") => {
     return items.map((item) => {
       const itemPath = `${path}/${item.name}`;
-      if (item.type === "folder") {
-        const isExpanded = expandedFolders.has(itemPath);
-        return (
-          <div key={itemPath}>
-            <div
-              className="flex items-center cursor-pointer mb-3 rounded-sm hover:bg-gray-800 text-gray-300 py-1"
-              onClick={() => toggleFolder(itemPath)}
-            >
-              {isExpanded ? (
-                <ChevronDown className="w-4 h-2  mr-1 mb-5" />
-              ) : (
-                <ChevronRight className="w-4 h-2 mb-4 mr-1" />
+      return (
+        <ContextMenu key={itemPath}>
+          <ContextMenuTrigger>
+            <div className="flex items-center cursor-pointer mb-1 rounded-sm hover:bg-gray-800 text-gray-300 py-1">
+              {item.type === "folder" && (
+                <div
+                  className="flex items-center w-full"
+                  onClick={() => toggleFolder(itemPath)}
+                >
+                  {expandedFolders.has(itemPath) ? (
+                    <ChevronDown className="w-4 h-4 mr-1" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4 mr-1" />
+                  )}
+                  <Folder className="w-4 h-4 mr-2" />
+                  <span>{item.name}</span>
+                </div>
               )}
-              <Folder className="w-4 h-4 mr-2" />
-              <span>{item.name}</span>
+              {item.type === "file" && (
+                <div
+                  className={`flex items-center w-full ${
+                    selectedFile === item ? "bg-gray-700" : ""
+                  }`}
+                  onClick={() => handleFileSelect(item)}
+                >
+                  <File className="w-4 h-4 mr-2 ml-5" />
+                  <span>{item.name}</span>
+                </div>
+              )}
             </div>
-            {isExpanded && item.children && (
-              <div className="ml-4">
-                {renderFileSystem(item.children, itemPath)}
-              </div>
-            )}
-          </div>
-        );
-      } else {
-        return (
-          <div
-            key={itemPath}
-            className={`flex items-center cursor-pointer hover:bg-gray-800 text-gray-300 mb-3 rounded-sm mx-4 py-1 ${
-              selectedFile === item ? "bg-gray-700" : ""
-            }`}
-            onClick={() => handleFileSelect(item)}
-          >
-            <File className="w-4 h-4 mr-2" />
-            <span>{item.name}</span>
-          </div>
-        );
-      }
+          </ContextMenuTrigger>
+          <ContextMenuContent>
+            <ContextMenuItem
+              onClick={() => {
+                setCurrentPath(itemPath);
+                setIsCreateDialogOpen(true);
+              }}
+            >
+              New File
+            </ContextMenuItem>
+            <ContextMenuItem
+              onClick={() => {
+                setCurrentPath(itemPath);
+                setNewItemType("folder");
+                setIsCreateDialogOpen(true);
+              }}
+            >
+              New Folder
+            </ContextMenuItem>
+            <ContextMenuItem onClick={() => handleDeleteItem(itemPath)}>
+              Delete
+            </ContextMenuItem>
+          </ContextMenuContent>
+        </ContextMenu>
+      );
     });
   };
 
   // Define the custom theme for Monaco Editor
-    useEffect(() => {
+  useEffect(() => {
     loader.init().then((monaco) => {
       monaco.editor.defineTheme("customTheme", {
         base: "vs-dark", // Dark mode base
@@ -405,30 +627,127 @@ export default function CodeIDE() {
 
   return (
     <>
-      <div className="flex h-screen bg-background">
-        <div className="w-64 border-r border-gray-700 overflow-auto p-4 bg-background">
-          <h2 className="text-lg font-semibold text-gray-300 mb-4">Files</h2>
-          {renderFileSystem(fileSystem)}
-        </div>
-        <div className="flex-1 bg-[#1e1e1e]">
-          {selectedFile ? (
-            <Editor
-              height="100%"
-              defaultLanguage="javascript"
-              value={selectedFile.content}
-              theme="customTheme" // Apply the custom theme here
-              options={{
-                minimap: { enabled: false },
-                fontSize: 18,
-                cursorSmoothCaretAnimation: "on",
-                fontFamily: "'Fira Code', monospace",
-              }}
-            />
-          ) : (
-            <div className="flex items-center justify-center h-full bg-background   text-gray-200">
-              Select a file to edit
+      <div className="flex h-screen bg-[#020817] text-white">
+        <div className="w-64 bg-[#010305] overflow-auto border-r border-gray-800">
+          <div className="p-4">
+            <h2 className="text-sm font-semibold mb-2 text-gray-400">
+              EXPLORER
+            </h2>
+            <div className="flex justify-between items-center mb-4">
+              <Dialog
+                open={isCreateDialogOpen}
+                onOpenChange={setIsCreateDialogOpen}
+              >
+                <DialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setCurrentPath("")}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>
+                      Create New {newItemType === "file" ? "File" : "Folder"}
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="flex flex-col space-y-4">
+                    <div className="flex space-x-2">
+                      <Button
+                        variant={newItemType === "file" ? "default" : "outline"}
+                        onClick={() => setNewItemType("file")}
+                      >
+                        <FileIcon className="w-4 h-4 mr-2" />
+                        File
+                      </Button>
+                      <Button
+                        variant={
+                          newItemType === "folder" ? "default" : "outline"
+                        }
+                        onClick={() => setNewItemType("folder")}
+                      >
+                        <FolderPlus className="w-4 h-4 mr-2" />
+                        Folder
+                      </Button>
+                    </div>
+                    <Input
+                      placeholder={`Enter ${newItemType} name`}
+                      value={newItemName}
+                      onChange={(e) => setNewItemName(e.target.value)}
+                    />
+                    <Button onClick={handleCreateItem}>Create</Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
-          )}
+            {renderFileSystem(fileSystem)}
+          </div>
+        </div>
+        <div className="flex flex-col flex-1">
+          <div className="flex-1 overflow-hidden ">
+            {selectedFile ? (
+              <Editor
+                height="100%"
+                defaultLanguage={language || "plaintext"}
+                value={selectedFile.content}
+                theme="customTheme"
+                options={{
+                  minimap: { enabled: false },
+                  fontSize: 18,
+                  lineNumbers: "on",
+                  roundedSelection: false,
+                  scrollBeyondLastLine: false,
+                  readOnly: false,
+                  cursorStyle: "line",
+                  automaticLayout: true,
+                  
+                }}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full bg-[#020817] text-gray-400">
+                Select a file to edit
+              </div>
+            )}
+          </div>
+          {/* add scrool area in terminal  */}
+
+          <div className="h-64 bg-[#020817] border-t overflow-hidden border-gray-800">
+            <div className="flex items-center bg-[#010305] text-sm border-b border-gray-800">
+              <div className="px-4 py-1 bg-[#020817] text-white">TERMINAL</div>
+              <div className="px-4 py-1 text-gray-400">OUTPUT</div>
+              <div className="px-4 py-1 text-gray-400">DEBUG CONSOLE</div>
+            </div>
+            <div
+              ref={terminalRef}
+              className="h-full overflow-auto p-2 font-mono text-sm"
+            >
+              {output.map((line, index) => (
+                <div
+                  key={index}
+                  className={
+                    line.startsWith("PS") ? "text-[#569CD6]" : "text-white"
+                  }
+                >
+                  {line}
+                </div>
+              ))}
+              <div className="flex items-center">
+                <span className="text-[#569CD6] mr-2">
+                  PS E:\aicodex\apps\web&gt;
+                </span>
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  className="bg-transparent text-green-400 focus:outline-none flex-1"
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </>
