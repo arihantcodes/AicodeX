@@ -8,9 +8,9 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\""
   },
   "devDependencies": {
-  "prettier": "^3.2.5",
-  "turbo": "^2.1.2",
-  "typescript": "^5.6.2"
+    "prettier": "^3.2.5",
+    "turbo": "^2.1.2",
+    "typescript": "^5.6.2"
   },
   "engines": {
     "node": ">=18"
@@ -136,6 +136,7 @@
     "es-set-tostringtag": "^2.0.3",
     "es-shim-unscopables": "^1.0.2",
     "es-to-primitive": "^1.2.1",
+    "esbuild": "^0.24.0",
     "escalade": "^3.2.0",
     "escape-string-regexp": "^1.0.5",
     "escodegen": "^2.1.0",
