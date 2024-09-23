@@ -238,6 +238,35 @@ const changeCurrentPassword = asyncHandler(async (req: Request, res: Response) =
 
   return res.status(200).json(new ApiResponse(200, {}, "Password changed successfully"));
 });
+const usernameandpasswordchange = asyncHandler(async (req: Request, res: Response) => {
+  const { username, password } = req.body;
+  const userId = req.user?.userId;
+
+  if (!userId) {
+    throw new ApiError(401, "User not authenticated");
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  const isPasswordCorrect = await bcrypt.compare(password, user.password);
+  if (!isPasswordCorrect) {
+    throw new ApiError(400, "Incorrect password");
+  }
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { username: username },
+  });
+
+  return res.status(200).json(new ApiResponse(200, {}, "username changed successfully"));
+})
+
 
 // Get Current User Profile by Username
 const getCurrentUserProfileByUsername = asyncHandler(async (req: Request, res: Response) => {
@@ -300,6 +329,7 @@ export {
   loginUser,
   getCurrentUserProfileByUsername,
   changeCurrentPassword,
+  usernameandpasswordchange,
   logoutUser,
   me,
   refreshAccessToken,

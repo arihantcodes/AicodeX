@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars */
+/* eslint-disable turbo/no-undeclared-env-vars */
 "use client";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";

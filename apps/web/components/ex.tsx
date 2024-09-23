@@ -1,5 +1,3 @@
-/* eslint-disable no-undef */
-/* eslint-disable turbo/no-undeclared-env-vars */
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -7,7 +5,6 @@ import axios from "axios";
 import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import {
   DropdownMenu,
@@ -50,28 +47,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { ModeToggle } from "@/components/moon";
 import { useToast } from "@/components/hooks/use-toast";
-// import { ToastAction } from "@/components/ui/toast";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Calendar } from "lucide-react";
+
 import ClipLoader from "react-spinners/ClipLoader";
 interface UserData {
   username: string;
@@ -288,8 +264,7 @@ const Dashboard = () => {
               <DropdownMenuSeparator />
               <DropdownMenuItem>
                 <Settings className="mr-2 h-4 w-4" />
-                <Link href={`/setting/${userData?.username}`}>Settings</Link>
-
+                <Link href="/setting">Settings</Link>
                 {/* <span>Settings</span> */}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleLogout}>
@@ -364,10 +339,9 @@ const Dashboard = () => {
           </DialogContent>
         </Dialog>
         {/* side navabar */}
-        <nav className="space-y-2">
+        <nav className="space-y-2 ">
           <Button variant="ghost" className="w-full justify-start">
-            <Star className="mr-2 h-4 w-4" />
-            <Link href={`/dashboard/${userData?.username}`}>Dashboard</Link>
+            <Star className="mr-2 h-4 w-4" /> Favorites
           </Button>
           <Button variant="ghost" className="w-full justify-start active">
             <Code className="mr-2 h-4 w-4" /> My Projects
@@ -379,168 +353,9 @@ const Dashboard = () => {
             <Terminal className="mr-2 h-4 w-4" /> Console
           </Button>
           <Button variant="ghost" className="w-full justify-start">
-            <Settings className="mr-2 h-4 w-4" /> 
-            <Link href={`/setting/${userData?.username}`}>Setting</Link>
+            <Settings className="mr-2 h-4 w-4" /> Settings
           </Button>
         </nav>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col">
-        <header className="flex items-center justify-between p-4 border-b">
-          <h1 className="text-2xl font-bold">Dashboard</h1>
-          <Input
-            type="search"
-            placeholder="Search projects..."
-            className="w-1/3"
-          />
-          <ModeToggle />
-        </header>
-        <main className="container mx-auto p-4 space-y-6">
-          <h1 className="text-3xl font-bold text-center mb-6">
-            Project Dashboard
-          </h1>
-          <Tabs defaultValue="projects" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3 lg:w-1/2 lg:mx-auto">
-              <TabsTrigger value="projects">Projects</TabsTrigger>
-              <TabsTrigger value="recent">Recent</TabsTrigger>
-              <TabsTrigger value="shared">Shared</TabsTrigger>
-            </TabsList>
-            <TabsContent value="projects">
-              <AnimatePresence>
-                {loading ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {[...Array(6)].map((_, i) => (
-                      <Card key={i} className="h-[250px]">
-                        <CardHeader>
-                          <Skeleton className="h-6 w-2/3" />
-                        </CardHeader>
-                        <CardContent className="space-y-2">
-                          <Skeleton className="h-4 w-full" />
-                          <Skeleton className="h-4 w-5/6" />
-                          <Skeleton className="h-4 w-4/6" />
-                        </CardContent>
-                        <CardFooter>
-                          <Skeleton className="h-4 w-1/2" />
-                        </CardFooter>
-                      </Card>
-                    ))}
-                  </div>
-                ) : error ? (
-                  <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="text-red-500 text-center"
-                  >
-                    {error}
-                  </motion.p>
-                ) : projects.length > 0 ? (
-                  <motion.div
-                    variants={containerVariants}
-                    initial="hidden"
-                    animate="visible"
-                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                  >
-                    {projects.map((project) => (
-                      <motion.div key={project.id} variants={itemVariants}>
-                        <Card className="h-full flex flex-col hover:shadow-lg transition-shadow duration-300">
-                          <CardHeader className="flex justify-between items-start">
-                            <div className="flex justify-evenly">
-                              <Link
-                                href={`/editor/${project.projectname}?language=${project.language}`}
-                              >
-                                <CardTitle className="text-xl font-semibold truncate">
-                                  {project.projectname}
-                                </CardTitle>
-                              </Link>
-                              <AlertDialog>
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <button className="h-8 w-8 flex items-center justify-center text-gray-500 hover:text-gray-700 focus:outline-none">
-                                      <MoreVertical className="h-5 w-5" />
-                                    </button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end">
-                                    <AlertDialogTrigger asChild>
-                                      <DropdownMenuItem className="text-red-600">
-                                        <Trash className="mr-2 h-4 w-4" />
-                                        Delete
-                                      </DropdownMenuItem>
-                                    </AlertDialogTrigger>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>
-                                      Are you sure?
-                                    </AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      This action cannot be undone. This will
-                                      permanently delete your project.
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>
-                                      Cancel
-                                    </AlertDialogCancel>
-                                    <AlertDialogAction
-                                      onClick={() => deleteproject(project.id)}
-                                    >
-                                      Delete
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
-                            </div>
-                          </CardHeader>
-                          <CardContent className="flex-grow">
-                            <p className="mb-4 text-sm text-gray-600 line-clamp-3">
-                              {project.description}
-                            </p>
-                          </CardContent>
-                          <CardFooter className="flex justify-between items-center text-xs text-gray-500">
-                            <div className="flex items-center">
-                              <Code className="w-4 h-4 mr-1" />
-                              {project.language}
-                            </div>
-                            <div className="flex items-center">
-                              <Calendar className="w-4 h-4 mr-1" />
-                              {new Date(project.createdAt).toLocaleDateString()}
-                            </div>
-                          </CardFooter>
-                        </Card>
-                      </motion.div>
-                    ))}
-                  </motion.div>
-                ) : (
-                  <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="text-center text-gray-500"
-                  >
-                    No projects found.
-                  </motion.p>
-                )}
-              </AnimatePresence>
-            </TabsContent>
-            <TabsContent value="recent">
-              <Card>
-                <CardContent className="p-6 text-center text-gray-500">
-                  Your recent projects will appear here.
-                </CardContent>
-              </Card>
-            </TabsContent>
-            <TabsContent value="shared">
-              <Card>
-                <CardContent className="p-6 text-center text-gray-500">
-                  Projects shared with you will appear here.
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </main>
       </div>
     </div>
   );
