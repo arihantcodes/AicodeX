@@ -26,6 +26,7 @@
     "@radix-ui/react-toast": "^1.2.1",
     "@repo/ui": "*",
     "@tabler/icons-react": "^3.16.0",
+    "@xterm/xterm": "^5.5.0",
     "axios": "^1.7.7",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
@@ -39,6 +40,7 @@
     "react-dom": "18.3.1",
     "react-hot-toast": "^2.4.1",
     "react-spinners": "^0.14.1",
+    "socket.io-client": "^4.8.0",
     "tailwind-merge": "^2.5.2",
     "tailwindcss-animate": "^1.0.7"
   },
