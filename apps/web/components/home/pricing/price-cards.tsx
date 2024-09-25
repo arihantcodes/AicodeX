@@ -23,13 +23,8 @@ export function PriceCards({ loading, frequency, priceMap }: Props) {
           <div className={cn('flex gap-5 flex-col rounded-lg rounded-b-none pricing-card-border')}>
             {tier.featured && <FeaturedCardGradient />}
             <PriceTitle tier={tier} />
-            <PriceAmount
-              loading={loading}
-              tier={tier}
-              priceMap={priceMap}
-              value={frequency.value}
-              priceSuffix={frequency.priceSuffix}
-            />
+           <PriceAmount loading={false} tier={tier} priceMap={priceMap} value={'month'} priceSuffix={''}           
+           />
             <div className={'px-8'}>
               <Separator className={'bg-border'} />
             </div>

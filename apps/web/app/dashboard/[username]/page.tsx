@@ -48,7 +48,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { ModeToggle } from "@/components/moon";
+
 import { useToast } from "@/components/hooks/use-toast";
 // import { ToastAction } from "@/components/ui/toast";
 import { motion, AnimatePresence } from "framer-motion";
@@ -263,21 +263,21 @@ const Dashboard = () => {
   useEffect(() => {}, []);
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen bg-background">
       {/* Sidebar */}
       <div className="w-64 p-4 flex flex-col border-r-2 border-gray-100">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-6 ">
           <div className="flex items-center">
             <span className="ml-2 font-semibold">{userData?.username}</span>
           </div>
-          <DropdownMenu>
+          <DropdownMenu >
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon">
                 <ChevronDown size={20} />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end" forceMount>
-              <DropdownMenuLabel className="font-normal">
+            <DropdownMenuContent className="w-56 bg-background" align="end" forceMount>
+              <DropdownMenuLabel className="font-normal ">
                 <div className="flex flex-col space-y-1">
                   <p className="text-sm font-medium leading-none">
                     username{userData?.username}
@@ -394,14 +394,14 @@ const Dashboard = () => {
             placeholder="Search projects..."
             className="w-1/3"
           />
-          <ModeToggle />
+          
         </header>
         <main className="container mx-auto p-4 space-y-6">
           <h1 className="text-3xl font-bold text-center mb-6">
             Project Dashboard
           </h1>
           <Tabs defaultValue="projects" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3 lg:w-1/2 lg:mx-auto">
+            <TabsList className="grid bg-white w-full grid-cols-3 lg:w-1/2 lg:mx-auto">
               <TabsTrigger value="projects">Projects</TabsTrigger>
               <TabsTrigger value="recent">Recent</TabsTrigger>
               <TabsTrigger value="shared">Shared</TabsTrigger>
@@ -411,8 +411,8 @@ const Dashboard = () => {
                 {loading ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {[...Array(6)].map((_, i) => (
-                      <Card key={i} className="h-[250px]">
-                        <CardHeader>
+                      <Card key={i} className="h-[250px] bg-background">
+                        <CardHeader className="">
                           <Skeleton className="h-6 w-2/3" />
                         </CardHeader>
                         <CardContent className="space-y-2">
@@ -444,7 +444,7 @@ const Dashboard = () => {
                   >
                     {projects.map((project) => (
                       <motion.div key={project.id} variants={itemVariants}>
-                        <Card className="h-full flex flex-col hover:shadow-lg transition-shadow duration-300">
+                        <Card className="h-full flex bg-background flex-col hover:shadow-lg transition-shadow duration-300">
                           <CardHeader className="flex justify-between items-start">
                             <div className="flex justify-evenly">
                               <Link
@@ -525,16 +525,16 @@ const Dashboard = () => {
                 )}
               </AnimatePresence>
             </TabsContent>
-            <TabsContent value="recent">
+            <TabsContent className="bg-background" value="recent">
               <Card>
-                <CardContent className="p-6 text-center text-gray-500">
+                <CardContent className="p-6 text-center text-gray-300 bg-background">
                   Your recent projects will appear here.
                 </CardContent>
               </Card>
             </TabsContent>
             <TabsContent value="shared">
               <Card>
-                <CardContent className="p-6 text-center text-gray-500">
+                <CardContent className="p-6 text-center bg-background text-gray-300">
                   Projects shared with you will appear here.
                 </CardContent>
               </Card>

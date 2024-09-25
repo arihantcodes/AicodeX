@@ -1,133 +1,38 @@
-/* eslint-disable no-unused-vars */
-/* eslint-disable turbo/no-undeclared-env-vars */
-"use client";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/footer";
-import axios from "axios";
-import { useRouter } from "next/navigation";
+import { LoginGradient } from '@/components/gradients/login-gradient';
+import '../../styles/login.css';
+import { LoginCardGradient } from '@/components/gradients/login-card-gradient';
 
-import { useState } from "react";
-import { useToast } from "@/components/hooks/use-toast"
-import { ToastAction } from "@/components/ui/toast";
-const LoginForm = () => {
-  const [formData, setFormData] = useState({
-    username: "",
-    email: "",
-    password: ""
-  });
+import { GhLoginButton } from '@/components/authentication/gh-login-button';
+import {SignupForm}  from '@/components/authentication/sign-up-form';
+import Link from 'next/link';
 
-  const router = useRouter();
-  const { toast } = useToast()
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
-
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    try {
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/user/signup`,
-        formData, // send formData as an object, not FormData
-        {
-          headers: {
-            "Content-Type": "application/json"
-          },
-          withCredentials: true, // Make sure cookies are handled properly
-        }
-      );
-     
-      router.push(`/signin`);
-      toast({
-        description: "Account created successfully.",
-      })
-      
-    } catch (error) {
-      console.error(error);
-      toast({
-        variant: "destructive",
-        title: "Uh oh! Something went wrong.",
-        description: "Account creation failed.",
-        action: <ToastAction altText="Try again">Try again</ToastAction>,
-      })
-    }
-  };
-
+export default function LoginPage() {
   return (
     <div>
-      <Navbar />
-      <Card className="mx-auto max-w-sm mt-24 mb-10">
-        <CardHeader>
-          <CardTitle className="text-xl">Sign Up</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="grid gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="username">Username</Label>
-              <Input
-                id="username"
-                name="username"
-                type="text"
-                placeholder="aicodex"
-                required
-                value={formData.username}
-                onChange={handleChange}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="aicodex@arihant.us"
-                required
-                value={formData.email}
-                onChange={handleChange}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                placeholder="Your password"
-                required
-                value={formData.password}
-                onChange={handleChange}
-              />
-            </div>
-            <Button type="submit" className="w-full">
-              Create an account
-            </Button>
-            <Button variant="outline" className="w-full">
-              Sign up with GitHub
-            </Button>
-          </form>
-          <div className="mt-4 text-center text-sm">
-            Already have an account?{" "}
-            <Link href="/signin" className="underline">
-              Sign in
+      <LoginGradient />
+      <div className={'flex flex-col'}>
+        <div
+          className={
+            'mx-auto mt-[112px] bg-background/80 w-[343px] md:w-[488px] gap-5 flex-col rounded-lg rounded-b-none login-card-border backdrop-blur-[6px]'
+          }
+        >
+          <LoginCardGradient />
+          <SignupForm />
+        </div>
+        <GhLoginButton label={'Log in with GitHub'} />
+        <div
+          className={
+            'mx-auto w-[343px] md:w-[488px] bg-background/80 backdrop-blur-[6px] px-6 md:px-16 pt-0 py-8 gap-6 flex flex-col items-center justify-center rounded-b-lg'
+          }
+        >
+          <div className={'text-center text-muted-foreground text-sm mt-4 font-medium'}>
+            Already have an account{' '}
+            <Link href={'/signin'} className={'text-white'}>
+              Sign In
             </Link>
           </div>
-        </CardContent>
-      </Card>
-      <Footer />
+        </div>
+      </div>
     </div>
   );
-};
-
-export default LoginForm;
+}
