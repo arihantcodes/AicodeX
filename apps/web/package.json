@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@monaco-editor/react": "^4.6.0",
+    "@paddle/paddle-js": "^1.2.1",
     "@radix-ui/react-alert-dialog": "^1.1.1",
     "@radix-ui/react-avatar": "^1.1.0",
     "@radix-ui/react-context-menu": "^2.2.1",
@@ -26,6 +27,7 @@
     "@radix-ui/react-toast": "^1.2.1",
     "@repo/ui": "*",
     "@tabler/icons-react": "^3.16.0",
+    "@tailwindcss/container-queries": "^0.1.1",
     "@xterm/xterm": "^5.5.0",
     "axios": "^1.7.7",
     "class-variance-authority": "^0.7.0",

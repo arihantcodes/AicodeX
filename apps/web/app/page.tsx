@@ -1,20 +1,15 @@
 import Footer from "@/components/footer";
+import { HomePage } from "@/components/home";
 
-import Hero from "@/components/hero";
-import { MacbookScrollDemo } from "@/components/landing";
 
-import Navbar from "@/components/Navbar";
 import { Shine } from "@/components/shine";
 import React from "react";
 
 const page = () => {
   return (
     <>
-      <Navbar />
-
-      <Hero />
-      <MacbookScrollDemo />
-      
+     
+      <HomePage/>
       <Shine />
       <Footer />
     </>

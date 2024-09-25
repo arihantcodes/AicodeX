@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
-import "./globals.css";
+import '@/styles/globals.css'
+import '@/styles/layout.css'
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/toaster"
 const fontSans = Poppins({
@@ -22,17 +23,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body   className={`${fontSans.className} bg-background`}>
-      <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
+      <body   className={`${fontSans.className} min-h-full dark`}>
+   
             
         {children}
         <Toaster />
-        </ThemeProvider>
+  
       </body>
     </html>
   );

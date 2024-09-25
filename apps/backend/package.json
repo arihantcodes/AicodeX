@@ -11,6 +11,7 @@
     "@auth/express": "^0.6.0",
     "@prisma/client": "^5.19.1",
     "bcryptjs": "^2.4.3",
+    "chokidar": "^4.0.1",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.0",
