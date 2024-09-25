@@ -9,6 +9,8 @@ import os from "os";
 import userRouter from "./routes/user.route";
 import projectRouter from "./routes/project.route";
 import path from "path"
+import chokidar from "chokidar";
+
 dotenv.config();
 
 const app = express();
@@ -58,6 +60,9 @@ io.on("connection", (socket) => {
     ptyProcess.write(data); // Write the command to the pty terminal
   });
 
+  chokidar.watch('./aicodex').on('all', (event, path) => {
+    io.emit('file:refresh', path)
+});
   // Send back the terminal output to the client
 });
 app.get("/files", async(req, res) => {
@@ -65,6 +70,13 @@ app.get("/files", async(req, res) => {
   return res.json({tree: fileTree})
 
 })
+
+app.get('/files/content', async (req, res) => {
+  const path = req.query.path;
+  const content = fs.readFileSync(`./aicodex${path}`, 'utf-8');
+  return res.json({ content });
+})
+
 
 const port = process.env.PORT || 3007;
 server.listen(port, () => {
