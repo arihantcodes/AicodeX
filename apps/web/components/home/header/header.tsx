@@ -20,7 +20,7 @@ export default function Header() {
                 <Link href={'/signin'}>Sign in</Link>
               </Button>
             
-              <Button  variant={'secondary'} size={'lg'}>
+              <Button  variant={'secondary'} className='hidden md:flex' size={'lg'}>
                 <Link href={'/signup'}>Sign up</Link>
               </Button>
             
