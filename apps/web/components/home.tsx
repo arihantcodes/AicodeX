@@ -18,7 +18,7 @@ export function HomePage() {
 
   return (
     <>
-      <LocalizationBanner country={country} onCountryChange={setCountry} />
+      <LocalizationBanner/>
       <div>
         <HomePageBackground />
         <Header  />

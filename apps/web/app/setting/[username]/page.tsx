@@ -145,7 +145,7 @@ export default function Dashboard() {
                 <ChevronDown size={20} />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end" forceMount>
+            <DropdownMenuContent className="w-56 bg-background" align="end" forceMount>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
                   <p className="text-sm font-medium leading-none">{userData.username}</p>
@@ -187,8 +187,8 @@ export default function Dashboard() {
         </nav>
       </div>
       <div className="flex-1 flex flex-col">
-        <main className="mt-32">
-          <Card className="w-full max-w-4xl mx-auto mt-8">
+        <main className="mt-32 bg-background">
+          <Card className="w-full max-w-4xl mx-auto mt-8 bg-background">
             <CardHeader className="flex flex-col items-center">
               <Avatar className="w-24 h-24 mb-4">
                 <AvatarImage src={avatarUrl} alt="Profile Avatar" />
@@ -198,8 +198,8 @@ export default function Dashboard() {
               <CardDescription>View and edit your profile information</CardDescription>
             </CardHeader>
             <CardContent>
-              <Tabs defaultValue="view" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
+              <Tabs defaultValue="view" className="w-full ">
+                <TabsList className="grid w-full grid-cols-2 bg-white">
                   <TabsTrigger value="view">View Profile</TabsTrigger>
                   <TabsTrigger value="edit">Edit Profile</TabsTrigger>
                 </TabsList>

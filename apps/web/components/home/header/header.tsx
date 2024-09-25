@@ -9,15 +9,19 @@ export default function Header() {
     <nav>
       <div className="mx-auto max-w-7xl relative px-[32px] py-[18px] flex items-center justify-between">
         <div className="flex flex-1 items-center justify-start">
-          <Link className="flex items-center font-bold text-lg" href={'/'}>
+          <Link className="flex items-center font-bold text-xl" href={'/'}>
             AICODEX
           </Link>
         </div>
         <div className="flex flex-1 items-center justify-end">
           <div className="flex space-x-4">
           
-              <Button asChild={true} variant={'secondary'}>
+              <Button  variant={'default'} size={'lg'}>
                 <Link href={'/signin'}>Sign in</Link>
+              </Button>
+            
+              <Button  variant={'secondary'} className='hidden md:flex' size={'lg'}>
+                <Link href={'/signup'}>Sign up</Link>
               </Button>
             
           </div>

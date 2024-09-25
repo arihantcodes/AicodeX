@@ -1,103 +1,36 @@
-"use client";
+import { LoginGradient } from '@/components/gradients/login-gradient';
+import '../../styles/login.css';
+import { LoginCardGradient } from '@/components/gradients/login-card-gradient';
+import { LoginForm } from '@/components/authentication/login-form';
+import { GhLoginButton } from '@/components/authentication/gh-login-button';
 
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import Footer from "@/components/footer";
-import Navbar from "@/components/Navbar";
-import axios from "axios";
-import { useRouter } from "next/navigation";
-import toast from "react-hot-toast";
-
-const SignIn = () => {
-  const router = useRouter();
-
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    const data = {
-      email: form.get("email") as string,
-      password: form.get("password") as string,
-    };
-
-    try {
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/user/signin`,
-        data
-      );
-
-      // Check if the response contains user data and extract username
-      const { user, accessToken } = response.data.data;
-
-      // After successful login, save token and redirect
-      localStorage.setItem("accessToken", accessToken);
-      router.push(`/dashboard/${user.username}`);
-
-      toast.success("Login successful");
-    } catch (error) {
-      console.error(error);
-      toast.error("Login failed");
-    }
-  };
-
+export default function LoginPage() {
   return (
     <div>
-      <Navbar />
-      <Card className="mx-auto max-w-sm mt-28 mb-12">
-        <CardHeader>
-          <CardTitle className="text-2xl">Login</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="grid gap-4">
-            <div className="grid gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="m@example.com"
-                  required
-                />
-              </div>
-              <div className="grid gap-2">
-                <div className="flex items-center">
-                  <Label htmlFor="password">Password</Label>
-                  <Link
-                    href="/forgot-password"
-                    className="ml-auto inline-block text-sm underline"
-                  >
-                    Forgot your password?
-                  </Link>
-                </div>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  required
-                />
-              </div>
-              <Button type="submit" className="w-full">
-                Login
-              </Button>
-              <Button variant="outline" className="w-full">
-                Login with Google
-              </Button>
-            </div>
-          </form>
-          <div className="mt-4 text-center text-sm">
-            Don&apos;t have an account?{" "}
-            <Link href="/signup" className="underline">
+      <LoginGradient />
+      <div className={'flex flex-col'}>
+        <div
+          className={
+            'mx-auto mt-[112px] bg-background/80 w-[343px] md:w-[488px] gap-5 flex-col rounded-lg rounded-b-none login-card-border backdrop-blur-[6px]'
+          }
+        >
+          <LoginCardGradient />
+          <LoginForm />
+        </div>
+        <GhLoginButton label={'Log in with GitHub'} />
+        <div
+          className={
+            'mx-auto w-[343px] md:w-[488px] bg-background/80 backdrop-blur-[6px] px-6 md:px-16 pt-0 py-8 gap-6 flex flex-col items-center justify-center rounded-b-lg'
+          }
+        >
+          <div className={'text-center text-muted-foreground text-sm mt-4 font-medium'}>
+            Don’t have an account?{' '}
+            <a href={'/signup'} className={'text-white'}>
               Sign up
-            </Link>
+            </a>
           </div>
-        </CardContent>
-      </Card>
-      <Footer />
+        </div>
+      </div>
     </div>
   );
-};
-
-export default SignIn;
+}
