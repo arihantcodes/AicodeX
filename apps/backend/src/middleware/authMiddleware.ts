@@ -1,7 +1,7 @@
-import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
-import { PrismaClient } from '@repo/db';
-import ApiError from '../../utils/apierror';
+import { Request, Response, NextFunction } from "express";
+import jwt from "jsonwebtoken";
+import { PrismaClient } from "@repo/db";
+import ApiError from "../../utils/apierror";
 
 const prisma = new PrismaClient();
 
@@ -16,19 +16,28 @@ declare global {
   }
 }
 
-export const verifyJWT = async (req: Request, res: Response, next: NextFunction) => {
+export const verifyJWT = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
-    const token = req.cookies?.AccessToken || req.header("Authorization")?.replace("Bearer ", "");
+    const token =
+      req.cookies?.AccessToken ||
+      req.header("Authorization")?.replace("Bearer ", "");
 
     if (!token) {
       throw new ApiError(401, "Unauthorized request");
     }
 
-    const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET!) as jwt.JwtPayload;
+    const decodedToken = jwt.verify(
+      token,
+      process.env.ACCESS_TOKEN_SECRET!
+    ) as jwt.JwtPayload;
 
     const user = await prisma.user.findUnique({
       where: { id: decodedToken.userId },
-      select: { id: true, username: true }
+      select: { id: true, username: true },
     });
 
     if (!user) {
@@ -50,7 +59,6 @@ export const authorizeRoles = (...allowedRoles: string[]) => {
 
     const user = await prisma.user.findUnique({
       where: { id: req.user.userId },
-      
     });
 
     if (!user) {
