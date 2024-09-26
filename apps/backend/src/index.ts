@@ -8,7 +8,7 @@ import fs from "fs";
 import os from "os";
 import userRouter from "./routes/user.route";
 import projectRouter from "./routes/project.route";
-import path from "path"
+import path from "path";
 import chokidar from "chokidar";
 
 dotenv.config();
@@ -42,7 +42,7 @@ const ptyProcess = pty.spawn(shell, [], {
   name: "xterm-color",
   cols: 80,
   rows: 30,
-  cwd: process.env.INIT_CWD +"./aicodex" ,
+  cwd: process.env.INIT_CWD + "./aicodex",
   env: process.env,
 });
 
@@ -51,59 +51,70 @@ app.use(express.json());
 ptyProcess.onData((data) => {
   io.emit("terminal:data", data);
 });
+
+chokidar.watch("./aicodex").on("all", (event, path) => {
+  if (event === "change") {
+    io.emit("file:refresh", path);
+    console.log(`File ${event} at ${path}`);
+  }
+});
+
 io.on("connection", (socket) => {
   console.log(`Socket connected`, socket.id);
 
-  // Listen for terminal commands from the frontend
+  socket.emit("file:refresh");
+
+  socket.on("file:change", ({ path, content }) => {
+    fs.writeFile(`./aicodex${path}`, content, (err) => {
+      if (err) {
+        console.error(`Error writing file: ${err}`);
+      } else {
+        console.log(`File changed: ${path}`);
+      }
+    });
+  });
+
   socket.on("terminal:write", (data) => {
     console.log(`Received command: ${data}`);
     ptyProcess.write(data); // Write the command to the pty terminal
   });
-
-  chokidar.watch('./aicodex').on('all', (event, path) => {
-    io.emit('file:refresh', path)
 });
-  // Send back the terminal output to the client
+
+app.get("/files", async (req, res) => {
+  const fileTree = await generateFileTree("./aicodex");
+  return res.json({ tree: fileTree });
 });
-app.get("/files", async(req, res) => {
-  const fileTree = await generateFileTree('./aicodex')
-  return res.json({tree: fileTree})
 
-})
-
-app.get('/files/content', async (req, res) => {
+app.get("/files/content", async (req, res) => {
   const path = req.query.path;
-  const content = fs.readFileSync(`./aicodex${path}`, 'utf-8');
+  const content = fs.readFileSync(`./aicodex${path}`, "utf-8");
   return res.json({ content });
-})
-
+});
 
 const port = process.env.PORT || 3007;
 server.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
 
+async function generateFileTree(directory: any) {
+  const tree = {};
 
+  async function buildTree(currentDir: any, currentTree: any) {
+    const files = fs.readdirSync(currentDir);
 
-async function generateFileTree(directory:any) {
-  const tree = {}
+    for (const file of files) {
+      const filePath = path.join(currentDir, file);
+      const stat = fs.statSync(filePath);
 
-  async function buildTree(currentDir:any, currentTree:any) {
-      const files = fs.readdirSync(currentDir)
-
-      for (const file of files) {
-          const filePath = path.join(currentDir, file)
-          const stat = fs.statSync(filePath)
-
-          if (stat.isDirectory()) {
-              currentTree[file] = {}
-              await buildTree(filePath, currentTree[file])
-          } else {
-              currentTree[file] = null
-          }
+      if (stat.isDirectory()) {
+        currentTree[file] = {};
+        await buildTree(filePath, currentTree[file]);
+      } else {
+        currentTree[file] = null;
       }
+    }
   }
 
   await buildTree(directory, tree);
-  return tree
+  return tree;
 }
