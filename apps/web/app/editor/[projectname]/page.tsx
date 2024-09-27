@@ -74,7 +74,7 @@ export default function EnhancedCodeIDE() {
 
     const term = new Xterminal({
       rows: 100, // Set the number of rows
-      cols: 20, // Set the number of columns
+      cols: 70, // Set the number of columns
     });
     if (terminalRef.current) {
       term.open(terminalRef.current);
