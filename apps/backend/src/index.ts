@@ -35,6 +35,9 @@ app.use("/api/v1/", projectRouter);
 app.on("error", (error) => {
   console.log("Error on the server", error);
 });
+
+
+
 // io.attach(server);
 const shell = os.platform() === "win32" ? "powershell.exe" : "bash";
 // Initialize the pty process
